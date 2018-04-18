@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
-  "description": "Schema for cloud_properties section used by Resource Pools or VM Types.",
+  "description": "Schema for `cloud_properties` section used by Resource Pools and VM Types.",
   "links": [
     {
       "rel": "via",
@@ -9,10 +9,32 @@
     }
   ],
   "properties": {
-    "availability_zone": {
-      "description": "Availability zone to use for creating instances.",
-      "type": "string",
-      "title": "Availability Zone"
+    "advertised_routes": {
+      "description": "Creates routes in an [AWS Route Table](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/VPC_Route_Tables.html) with the created BOSH VM as the target. Requires IAM action `ec2:CreateRoute`, `ec2:DescribeRouteTables`, `ec2:ReplaceRoute`.",
+      "type": "array"
+    },
+    "auto_assign_public_ip": {
+      "default": false,
+      "items": {
+        "type": "object",
+        "properties": {
+          "table_id": {
+            "type": "string",
+            "description": "ID of the route table in which to create the route",
+            "examples": [
+              {
+                "default": "rt-abcdef123"
+              }
+            ]
+          },
+          "destination": {
+            "description": "Destination CIDR for the route. All traffic with a destination within this CIDR will be routed through the created BOSH VM.",
+            "type": "string"
+          }
+        }
+      },
+      "description": "Assigns a public IP address to the created VM. This IP is ephemeral and may change; use an [Elastic IP](http://bosh.io/docs/networks/#vip) instead for a persistent address.",
+      "type": "boolean"
     },
     "elbs": {
       "default": [],
@@ -21,7 +43,14 @@
         "type": "string"
       },
       "type": "array",
-      "title": "Elastic Load Balancers"
+      "title": "Elastic Load Balancers",
+      "examples": [
+        {
+          "default": [
+            "prod-elb"
+          ]
+        }
+      ]
     },
     "ephemeral_disk": {
       "description": "EBS backed ephemeral disk of custom size.",
@@ -37,6 +66,11 @@
           "type": "integer",
           "title": "IOPS"
         },
+        "kms_key_arn": {
+          "description": "The ARN of an Amazon KMS key to use when encrypting the disk.",
+          "type": "string",
+          "title": "KMS Key ARN"
+        },
         "size": {
           "description": "Specifies the disk size in megabytes.",
           "type": "integer",
@@ -44,7 +78,7 @@
         },
         "type": {
           "default": "standard",
-          "description": "Type of the disk",
+          "description": "Type of the [disk](http://aws.amazon.com/ebs/details/).",
           "enum": [
             "standard",
             "gp2",
@@ -67,12 +101,17 @@
       "title": "Ephemeral Disk"
     },
     "iam_instance_profile": {
-      "description": "Name of an IAM instance profile.",
+      "description": "Name of an [IAM instance profile](http://bosh.io/docs/aws-iam-instance-profiles/).",
       "type": "string",
-      "title": "IAM Instance Profile"
+      "title": "IAM Instance Profile",
+      "examples": [
+        {
+          "default": "director"
+        }
+      ]
     },
     "instance_type": {
-      "description": "Type of the instance.",
+      "description": "Type of the [instance](http://aws.amazon.com/ec2/instance-types/).",
       "enum": [
         "c1.medium",
         "c1.xlarge",
@@ -131,21 +170,52 @@
         "x1.32xlarge"
       ],
       "type": "string",
-      "title": "Instance Type"
+      "title": "Instance Type",
+      "examples": [
+        {
+          "default": "m3.medium"
+        }
+      ]
     },
     "key_name": {
-      "description": "Key pair name. Defaults to key pair name specified by default_key_name in global CPI settings.",
+      "description": "Key pair name. Defaults to key pair name specified by `default_key_name` in global CPI settings.",
       "type": "string",
-      "title": "Key Name"
+      "title": "Key Name",
+      "examples": [
+        {
+          "default": "bosh"
+        }
+      ]
+    },
+    "lb_target_groups": {
+      "description": "Array of Load Balancer Target Groups to which created VMs should be attached.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Load Balancer Target Groups",
+      "examples": [
+        {
+          "default": [
+            "prod-group1",
+            "prod-group2"
+          ]
+        }
+      ]
     },
     "placement_group": {
-      "description": "Name of a placement group.",
+      "description": "Name of a [placement group](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/placement-groups.html).",
       "type": "string",
-      "title": "Placement Group"
+      "title": "Placement Group",
+      "examples": [
+        {
+          "default": "my-group"
+        }
+      ]
     },
     "raw_instance_storage": {
       "default": false,
-      "description": "Exposes all available instance storage via labeled disks.",
+      "description": "Exposes all available [instance storage via labeled disks](http://bosh.io/docs/aws-instance-storage/).",
       "type": "boolean",
       "title": "Raw Instance Storage"
     },
@@ -159,7 +229,7 @@
         },
         "type": {
           "default": "standard",
-          "description": "Type of the disk",
+          "description": "Type of the [disk](http://aws.amazon.com/ebs/details/)",
           "enum": [
             "standard",
             "gp2",
@@ -179,10 +249,20 @@
       "type": "array",
       "title": "Security Groups"
     },
+    "source_dest_check": {
+      "description": "Specifies whether the instance must be the source or destination of any traffic it sends or receives. If set to `false`, the instance does not need to be the source or destination. Used for network address translation (NAT) boxes, frequently to communicate between VPCs. Requires IAM action `ec2:ModifyInstanceAttribute`.",
+      "default": true,
+      "type": "boolean"
+    },
     "spot_bid_price": {
       "description": "Bid price in dollars for AWS spot instance. Using this option will slow down VM creation.",
       "type": "number",
-      "title": "Spot Bid Price"
+      "title": "Spot Bid Price",
+      "examples": [
+        {
+          "default": 0.03
+        }
+      ]
     },
     "spot_ondemand_fallback": {
       "default": false,
@@ -192,9 +272,14 @@
     },
     "tenancy": {
       "default": "default",
-      "description": "VM tenancy configuration.",
+      "description": "VM [tenancy](http://docs.aws.amazon.com/AmazonVPC/latest/UserGuide/dedicated-instance.html) configuration.",
       "type": "string",
-      "title": "Tenancy"
+      "title": "Tenancy",
+      "examples": [
+        {
+          "default": "dedicated"
+        }
+      ]
     }
   },
   "required": [
@@ -202,6 +287,5 @@
     "availability_zone"
   ],
   "type": "object",
-  "description": "Describes any IaaS-specific properties needed to create VMs.",
-  "title": "Cloud Properties"
+  "title": "Virtual Machine"
 }

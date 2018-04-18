@@ -2,11 +2,56 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
   "definitions": {
+    "env": {
+      "title": "Agent Environment Settings",
+      "description": "Specifies advanced BOSH Agent configuration for each instance in the group.",
+      "properties": {
+        "bosh": {
+          "type": "object",
+          "properties": {
+            "password": {
+              "description": "Crypted password for vcap/root user (will be placed into /etc/shadow on Linux).",
+              "type": "string"
+            },
+            "keep_root_password": {
+              "description": "Keep password for root and only change password for `vcap`.",
+              "default": false,
+              "type": "boolean"
+            },
+            "remove_dev_tools": {
+              "description": "Remove [compilers and dev tools](https://github.com/cloudfoundry/bosh-linux-stemcell-builder/blob/master/stemcell_builder/stages/dev_tools_config/assets/generate_dev_tools_file_list_ubuntu.sh) on non-compilation VMs.",
+              "default": false,
+              "type": "boolean"
+            },
+            "remove_static_libraries": {
+              "description": "Remove static libraries on non-compilation VMs",
+              "default": false,
+              "type": "boolean"
+            },
+            "swap_size": {
+              "description": "Size of swap partition in MB to create. Set this to 0 to avoid having a swap partition created. Default: RAM size of used VM type up to half of the ephemeral disk size.",
+              "type": "integer"
+            },
+            "ipv6": {
+              "type": "object",
+              "properties": {
+                "enable": {
+                  "description": "Force IPv6 enabled in kernel (this configuration is not necessary if one of the VM addresses is IPv6).",
+                  "type": "boolean",
+                  "default": false
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "update": {
+      "title": "Update Settings",
       "description": "This specifies instance update properties. These properties control how BOSH updates job instances during the deployment.",
       "properties": {
         "canaries": {
-          "description": "The number of canary instances.",
+          "description": "The number of [canary](https://bosh.io/docs/terminology/#canary) instances.",
           "type": "integer"
         },
         "canary_watch_time": {
@@ -23,8 +68,17 @@
           ]
         },
         "max_in_flight": {
-          "description": "The maximum number of non-canary instances to update in parallel.",
-          "type": "integer"
+          "oneOf": [
+            {
+              "description": "The maximum number of non-canary instances to update in parallel within an availability zone.",
+              "type": "integer"
+            },
+            {
+              "description": "The maximum number of non-canary instances to update in parallel within an availability zone",
+              "pattern": "^\\d+%$",
+              "type": "string"
+            }
+          ]
         },
         "serial": {
           "default": true,
@@ -54,43 +108,60 @@
       "type": "object"
     }
   },
-  "description": "http://bosh.io/docs/deployment-manifest.html",
+  "description": "The deployment manifest defines the components and properties of the deployment.",
   "properties": {
-    "director_uuid": {
-      "description": "This string must match the UUID of the currently targeted Director for the CLI to allow any operations on the deployment. Use bosh status to display the UUID of the currently targeted Director.",
-      "type": "string"
+    "addons": {
+      "description": "Specifies the [addons](https://bosh.io/docs/terminology/#addon) to be applied to this deployments.",
+      "type": "array"
     },
     "instance_groups": {
-      "description": "Specifies the mapping between BOSH release jobs and cloud instances. Jobs are defined in the BOSH release. The Jobs block defines how BOSH associates jobs with the VMs started by the IaaS.",
+      "description": "Specifies the mapping between release [jobs](https://bosh.io/docs/terminology/#job) and instance groups.",
       "items": {
         "properties": {
           "azs": {
+            "description": "List of AZs associated with this instance group (should only be used when using [first class AZs](https://bosh.io/docs/azs/)).",
             "items": {
-              "title": "Availability Zone",
               "type": "string"
             },
             "type": "array",
-            "title": "Availability Zones"
+            "title": "Availability Zones",
+            "example": [
+              {
+                "default": [
+                  "z1",
+                  "z2"
+                ]
+              }
+            ]
           },
           "instances": {
-            "description": "The number of job instances. Each instance is a VM running this particular job.",
+            "description": "The number of instances in this group. Each instance is a VM.",
             "type": "integer"
           },
           "jobs": {
-            "description": "Specifies the name and release of a job template.",
+            "description": "Specifies the name and release of jobs that will be installed on each instance.",
             "items": {
               "properties": {
                 "name": {
-                  "description": "The job template name",
+                  "description": "The job name.",
                   "type": "string"
                 },
                 "properties": {
                   "additionalProperties": true,
+                  "description": "Specifies job properties. Properties allow BOSH to configure jobs to a specific environment. `properties` defined in a Job block are accessible only to that job. Only properties specified here will be provided to the job.",
                   "type": "object"
                 },
                 "release": {
-                  "description": "The release where the job template exists",
+                  "description": "The release where the job exists.",
                   "type": "string"
+                },
+                "consumes": {
+                  "description": "Links consumed by the job. [Read more about link configuration](https://bosh.io/docs/links/#deployment)",
+                  "type": "object"
+                },
+                "provides": {
+                  "description": "Links provided by the job. [Read more about link configuration](https://bosh.io/docs/links/#deployment)",
+                  "type": "object"
                 }
               },
               "required": [
@@ -118,21 +189,23 @@
             "items": {
               "properties": {
                 "default": {
-                  "description": "Specifies which network components (DNS, Gateway) BOSH populates by default from this network. BOSH references this property if the Networks block defines multiple networks.",
+                  "description": "Specifies which network components (DNS, Gateway) BOSH populates by default from this network. This property is required if more than one network is specified.",
                   "items": {
                     "enum": [
                       "dns",
-                      "gateway"
+                      "gateway",
+                      "addressable"
                     ],
                     "type": "string"
                   },
                   "type": "array"
                 },
                 "name": {
-                  "$ref": "https://dpb587.github.io/bosh-json-schema/v0/director/cloud-config.json#/definitions/network_ref"
+                  "description": "A valid network name from the cloud config.",
+                  "type": "string"
                 },
                 "static_ips": {
-                  "description": "Array of IP addresses reserved for the job on the network",
+                  "description": "Array of IP addresses reserved for the instances on the network.",
                   "items": {
                     "type": "string"
                   },
@@ -152,19 +225,59 @@
             "description": "Specifies job properties. Properties allow BOSH to configure jobs to a specific environment. properties defined in a Job block are accessible only to that job, and override any identically named global properties.",
             "type": "object"
           },
+          "persistent_disk": {
+            "description": "Persistent disk size in MB. Alternatively you can specify `persistent_disk_type` key. [Read more about persistent disks](https://bosh.io/docs/persistent-disks/)",
+            "type": "integer"
+          },
+          "persistent_disk_type": {
+            "description": "A valid disk type name from the cloud config. [Read more about persistent disks](https://bosh.io/docs/persistent-disks/)",
+            "type": "string"
+          },
+          "stemcell": {
+            "type": "string",
+            "description": "A valid stemcell alias from the Stemcells Block."
+          },
           "update": {
-            "$ref": "#/definitions/update"
+            "$ref": "#/definitions/update",
+            "description": "Specific update settings for this instance group. Use this to override global job update settings on a per-instance-group basis."
           },
           "vm_type": {
-            "$ref": "https://dpb587.github.io/bosh-json-schema/v0/director/cloud-config.json#/definitions/vm_type_ref"
+            "$ref": "https://dpb587.github.io/bosh-json-schema/v0/director/cloud-config.json#/definitions/vm_type_ref",
+            "description": "A valid VM type name from the cloud config. Alternatively you can specify `vm_resources` key."
           },
           "vm_extensions": {
+            "description": "A valid list of VM extension names from the cloud config.",
             "items": {
-              "title": "VM Extension",
               "type": "string"
             },
             "type": "array",
             "title": "VM Extensions"
+          },
+          "vm_resources": {
+            "description": "Specifies generic VM resources such as CPU, RAM and disk size that are automatically translated into correct VM cloud properties to determine VM size. VM size is determined on best effort basis as some IaaSes may not support exact size configuration.",
+            "type": "object",
+            "properties": {
+              "cpu": {
+                "description": "Number of CPUs.",
+                "type": "integer"
+              },
+              "ram": {
+                "description": "Amount of RAM in MB.",
+                "type": "integer"
+              },
+              "ephemeral_disk_size": {
+                "description": "Ephemeral disk size in MB.",
+                "type": "integer"
+              }
+            },
+            "required": [
+              "cpu",
+              "ram",
+              "ephemeral_disk_size"
+            ]
+          },
+          "env": {
+            "$ref": "#/definitions/env"
           }
         },
         "required": [
@@ -181,13 +294,34 @@
     },
     "name": {
       "description": "The name of the deployment. A single Director can manage multiple deployments and distinguishes them by name.",
-      "type": "string"
+      "type": "string",
+      "examples": [
+        {
+          "default": "my-redis"
+        }
+      ]
+    },
+    "features": {
+      "description": "Specifies Director features that should be used within this deployment.",
+      "type": "object",
+      "properties": {
+        "use_dns_addresses": {
+          "type": "boolean",
+          "description": "Enables or disables returning of DNS addresses in links. Defaults to global Director `use_dns_addresses` configuration."
+        },
+        "randomize_az_placement": {
+          "type": "boolean",
+          "description": "Randomizes AZs for left over instances that cannot be distributed equally between AZs. For example, given an instance group with 5 instances and only 3 AZs, 1 remaining instance will be placed in randomly chosen AZ out of specified 3 AZs."
+        }
+      }
     },
     "properties": {
       "additionalProperties": true,
+      "description": "Describes global properties. Deprecated in favor of job level properties and links.",
       "type": "object"
     },
     "releases": {
+      "description": "The name and version of each release in the deployment.",
       "items": {
         "properties": {
           "name": {
@@ -195,10 +329,22 @@
             "type": "string"
           },
           "sha1": {
-            "type": "string"
+            "description": "SHA1 of asset referenced via URL. Works with CLI v2",
+            "type": "string",
+            "example": [
+              {
+                "default": "332ac15609b220a3fdf5efad0e0aa069d8235788"
+              }
+            ]
           },
           "url": {
-            "type": "string"
+            "description": "URL of a release to download. Works with CLI v2.",
+            "type": "string",
+            "example": [
+              {
+                "default": "https://bosh.io/d/github.com/cloudfoundry/syslog-release?v=11"
+              }
+            ]
           },
           "version": {
             "description": "The version of the release to use. Version can be `latest`.",
@@ -214,16 +360,93 @@
       "minItems": 1,
       "type": "array"
     },
+    "stemcells": {
+      "description": "The name and version of each stemcell in the deployment.",
+      "type": "object",
+      "properties": {
+        "alias": {
+          "type": "string",
+          "description": "Name of a stemcell used in the deployment."
+        },
+        "os": {
+          "type": "string",
+          "description": "Operating system of a matching stemcell. Either `name` or `os` keys must be specified.",
+          "examples": [
+            {
+              "default": "ubuntu-trusty"
+            }
+          ]
+        },
+        "version": {
+          "type": "string",
+          "description": "The version of a matching stemcell. Version can be `latest`."
+        },
+        "name": {
+          "type": "string",
+          "description": "Full name of a matching stemcell. Either `name` or `os` keys must be specified."
+        }
+      },
+      "required": [
+        "alias",
+        "version"
+      ]
+    },
     "update": {
       "$ref": "#/definitions/update"
+    },
+    "variables": {
+      "description": "Describes variables.",
+      "items": {
+        "properties": {
+          "name": {
+            "type": "string",
+            "description": "Unique name used to identify a variable."
+          },
+          "type": {
+            "type": "string",
+            "description": "Type of a variable.",
+            "enum": [
+              "certificate",
+              "password",
+              "rsa",
+              "ssh"
+            ]
+          },
+          "options": {
+            "type": "object",
+            "description": "Specifies generation options used for generating variable value if variable is not found.",
+            "additionalProperties": true,
+            "examples": [
+              {
+                "default": {
+                  "is_ca": true,
+                  "common_name": "some-ca"
+                }
+              }
+            ]
+          }
+        },
+        "type": "object"
+      },
+      "type": "array"
+    },
+    "tags": {
+      "description": "Specifies key value pairs to be sent to the CPI for VM tagging. Combined with runtime config level tags during the deploy.",
+      "type": "object",
+      "examples": [
+        {
+          "default": {
+            "project": "cf"
+          }
+        }
+      ]
     }
   },
   "required": [
     "name",
-    "director_uuid",
     "releases",
     "update"
   ],
-  "title": "deployment",
+  "title": "Deployment Manifest",
   "type": "object"
 }

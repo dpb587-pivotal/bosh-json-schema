@@ -1,0 +1,86 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "description": "Schema for `cloud_properties` section used by Availability Zones.",
+  "links": [
+    {
+      "rel": "via",
+      "href": "http://bosh.io/docs/aws-cpi.html#azs"
+    }
+  ],
+  "properties": {
+    "credentials_source": {
+      "description": "Selects credentials source between credentials provided in this configuration, or from an [IAM instance profile](http://bosh.io/docs/aws-iam-instance-profiles/).",
+      "type": "string",
+      "title": "Credentials Source",
+      "default": "static"
+    },
+    "access_key_id": {
+      "description": "Accesss Key ID.",
+      "type": "string",
+      "title": "Access Key ID"
+    },
+    "secret_access_key": {
+      "description": "Secret Access Key.",
+      "type": "string",
+      "title": "Secret Access Key"
+    },
+    "default_key_name": {
+      "description": "Name of the [Key Pair](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/ec2-key-pairs.html) that will be applied to all created VMs.",
+      "type": "string",
+      "title": "Default Key Pair",
+      "examples": [
+        {
+          "default": "bosh"
+        }
+      ]
+    },
+    "default_security_groups": {
+      "description": "See description under networks.",
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "title": "Default Security Groups"
+    },
+    "default_iam_instance_profile": {
+      "description": "Name of the [IAM instance profile](http://bosh.io/docs/aws-iam-instance-profiles/) that will be applied to all created VMs.",
+      "type": "string",
+      "title": "Default IAM Instance Profile"
+    },
+    "region": {
+      "description": "AWS region name.",
+      "type": "string",
+      "title": "Region Name",
+      "examples": [
+        {
+          "default": "us-east-1"
+        }
+      ]
+    },
+    "max_retries": {
+      "default": 2,
+      "description": "The maximum number of times AWS service errors (500) and throttling errors (`AWS::EC2::Errors::RequestLimitExceeded`) should be retried. There is an exponential backoff in between retries, so the more retries the longer it can take to fail.",
+      "type": "number",
+      "title": "Max Retries"
+    },
+    "encrypted": {
+      "default": false,
+      "description": "Turns on [EBS volume encryption](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html) for all VM's root (system), ephemeral and persistent disks.",
+      "type": "boolean",
+      "title": "Enable Encryption"
+    },
+    "kms_key_arn": {
+      "description": "Encrypts the disks using an encryption key stored in the [AWS Key Management Service (KMS)](https://aws.amazon.com/kms/). The format of the ID is `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`. Be sure to use the Key ID, not the Alias. If this property is omitted and `encrypted` is `true`, the disks will be encrypted using your account's default `aws/ebs` encryption key.",
+      "type": "boolean",
+      "title": "Enable Encryption"
+    }
+  },
+  "required": [
+    "default_key_name",
+    "default_security_groups",
+    "region"
+  ],
+  "type": "object",
+  "title": "Global Settings"
+}

@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
-  "description": "Schema for cloud_properties section used by dynamic network or manual network subnet.",
+  "description": "Schema for `cloud_properties` section used by dynamic and manual network subnets.",
   "links": [
     {
       "rel": "via",
@@ -10,7 +10,7 @@
   ],
   "properties": {
     "security_groups": {
-      "description": "Array of Security Groups, by name or ID, to apply to all VMs placed on this network. Security groups can be specified as follows, ordered by greatest precedence: vm_types, followed by networks, followed by default_security_groups.",
+      "description": "Array of [Security Groups](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/using-network-security.html), by name or ID, to apply to all VMs placed on this network. Security groups can be specified as follows, ordered by greatest precedence: `vm_types`, followed by `networks`, followed by `default_security_groups`.",
       "items": {
         "type": "string"
       },
@@ -28,6 +28,5 @@
     "subnet"
   ],
   "type": "object",
-  "description": "Describes any IaaS-specific properties for networks.",
-  "title": "Cloud Properties"
+  "title": "Network"
 }

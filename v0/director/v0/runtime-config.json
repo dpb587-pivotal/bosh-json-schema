@@ -1,20 +1,94 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
-  "description": "http://bosh.io/docs/runtime-config.html",
+  "description": "The runtime config defines IaaS agnostic configuration that applies to all deployments.",
+  "definitions": {
+    "placement_rules": {
+      "title": "Placement Rules",
+      "description": "Placement rules for `include` and `exclude` directives.",
+      "properties": {
+        "stemcell": {
+          "description": "Matches based on stemcell used",
+          "items": {
+            "type": "object",
+            "properties": {
+              "os": {
+                "description": "Matches stemcell's operating system.",
+                "type": "string",
+                "examples": [
+                  {
+                    "default": "ubuntu-trusty"
+                  }
+                ]
+              }
+            },
+            "required": [
+              "os"
+            ]
+          },
+          "type": "array"
+        },
+        "deployments": {
+          "description": "Matches based on deployment names.",
+          "items": {
+            "type": "string"
+          },
+          "type": "array"
+        },
+        "jobs": {
+          "description": "Matches based on jobs running on the instance group.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Matching job name."
+              },
+              "release": {
+                "type": "string",
+                "description": "Matching release name."
+              }
+            },
+            "required": [
+              "name",
+              "release"
+            ]
+          },
+          "type": "array"
+        },
+        "networks": {
+          "description": "Matches based on network names.",
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "type": "object"
+    }
+  },
   "properties": {
     "addons": {
+      "description": "Specifies the addons to be applied to all deployments.",
       "items": {
         "additionalProperties": false,
         "properties": {
           "jobs": {
+            "description": "Specifies the name and release of release jobs to be colocated.",
             "items": {
               "properties": {
                 "name": {
+                  "description": "The job name.",
                   "type": "string"
                 },
                 "release": {
+                  "description": "The release where the job exists.",
                   "type": "string"
+                },
+                "properties": {
+                  "description": "Specifies job properties. Properties allow the Director to configure jobs to a specific environment.",
+                  "type": "object",
+                  "additionalProperties": true
                 }
               },
               "required": [
@@ -26,11 +100,16 @@
             "type": "array"
           },
           "name": {
+            "description": "A unique name used to identify and reference the addon.",
             "type": "string"
           },
-          "properties": {
-            "additionalProperties": true,
-            "type": "object"
+          "include": {
+            "$ref": "#/definitions/placement_rules",
+            "description": "Specifies inclusion placement rules."
+          },
+          "exclude": {
+            "$ref": "#/definitions/placement_rules",
+            "description": "Specifies exclusion placement rules."
           }
         },
         "type": "object"
@@ -38,14 +117,35 @@
       "type": "array"
     },
     "releases": {
+      "description": "Specifies the releases used by the addons.",
       "items": {
         "additionalProperties": false,
         "properties": {
           "name": {
+            "description": "Name of a release name used by an addon",
             "type": "string"
           },
           "version": {
+            "description": "The version of the release to use. Version cannot be `latest`; it must be specified explicitly.",
             "type": "string"
+          },
+          "url": {
+            "description": "URL of a release to download. Works with CLI v2.",
+            "type": "string",
+            "examples": [
+              {
+                "default": "https://bosh.io/d/github.com/cloudfoundry/syslog-release?v=11"
+              }
+            ]
+          },
+          "sha1": {
+            "description": "SHA1 of asset referenced via URL. Works with CLI v2.",
+            "type": "string",
+            "examples": [
+              {
+                "default": "332ac15609b220a3fdf5efad0e0aa069d8235788"
+              }
+            ]
           }
         },
         "required": [
@@ -55,8 +155,23 @@
         "type": "object"
       },
       "type": "array"
+    },
+    "tags": {
+      "description": "Specifies key value pairs to be sent to the CPI for VM tagging. Combined with deployment level tags during the deploy.",
+      "type": "object",
+      "examples": [
+        {
+          "default": {
+            "business_unit": "marketing",
+            "email_contact": "ops@marketing.example.com"
+          }
+        }
+      ]
     }
   },
-  "title": "runtime-config",
+  "required": [
+    "releases"
+  ],
+  "title": "Runtime Config",
   "type": "object"
 }

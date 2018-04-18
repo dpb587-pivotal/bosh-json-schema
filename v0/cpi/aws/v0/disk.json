@@ -1,6 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
+  "description": "Schema for `cloud_properties` section used by Persistent Disks.",
   "links": [
     {
       "rel": "via",
@@ -31,7 +32,6 @@
       "title": "Type"
     }
   },
-  "description": "Describes any IaaS-specific properties needed to create disks.",
-  "title": "Cloud Properties",
+  "title": "Persistent Disk",
   "type": "object"
 }

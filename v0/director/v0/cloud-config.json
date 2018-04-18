@@ -1,7 +1,7 @@
 {
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
-  "description": "http://bosh.io/docs/cloud-config.html",
+  "description": "The cloud config defines IaaS specific configuration used by the Director and all deployments. It allows us to separate IaaS specific configuration into its own file and keep deployment manifests IaaS agnostic.",
   "definitions": {
     "az_ref": {
       "type": "string",
@@ -31,6 +31,7 @@
   },
   "properties": {
     "azs": {
+      "description": "Specifies the AZs available to deployments. At least one should be specified.",
       "items": {
         "additionalProperties": false,
         "properties": {
@@ -61,6 +62,14 @@
           "type": "string",
           "title": "Availability Zone"
         },
+        "cloud_properties": {
+          "$ref": "https://dpb587.github.io/bosh-json-schema/v0/cpi/vm.json#",
+          "description": "Describes any IaaS-specific properties needed to create VMs."
+        },
+        "env": {
+          "$ref": "https://dpb587.github.io/bosh-json-schema/v0/agent/v0/env.json#",
+          "description": "Agent environment options."
+        },
         "network": {
           "description": "References a valid network name defined in the Networks block. BOSH assigns network properties to compilation VMs according to the type and properties of the specified network.",
           "type": "string",
@@ -68,12 +77,16 @@
         },
         "reuse_compilation_vms": {
           "default": false,
-          "description": "If false, BOSH creates a new compilation VM for each new package compilation and destroys the VM when compilation is complete. If true, compilation VMs are re-used when compiling packages.",
+          "description": "If `false`, BOSH creates a new compilation VM for each new package compilation and destroys the VM when compilation is complete. If `true`, compilation VMs are re-used when compiling packages.",
           "type": "boolean",
           "title": "Reuse Compilation VMs"
         },
+        "vm_resources": {
+          "description": "Specifies generic VM resources such as CPU, RAM and disk size that are automatically translated into correct VM cloud properties to determine VM size. VM size is determined on best effort basis as some IaaSes may not support exact size configuration.",
+          "type": "object"
+        },
         "vm_type": {
-          "description": "Name of the VM type defined in VM types section to use for creating compilation VMs.",
+          "description": "Name of the VM type defined in VM types section to use for creating compilation VMs. Alternatively, you can specify the `vm_resources`, or `cloud_properties` key.",
           "type": "string",
           "title": "VM Type"
         },
@@ -86,14 +99,13 @@
       "required": [
         "workers",
         "az",
-        "vm_type",
         "network"
       ],
       "type": "object",
       "title": "Compilation"
     },
     "disk_types": {
-      "description": "Specifies the disk types available to deployments. At least one should be specified.",
+      "description": "Specifies the [disk types](http://bosh.io/docs/terminology.html#disk-types) available to deployments. At least one should be specified.",
       "items": {
         "properties": {
           "name": {
@@ -102,7 +114,7 @@
             "title": "Name"
           },
           "disk_size": {
-            "description": "Specifies the disk size. disk_size must be a positive integer. BOSH creates a persistent disk of that size in megabytes and attaches it to each job instance VM.",
+            "description": "Specifies the disk size. disk_size must be a positive integer. BOSH creates a [persistent disk](http://bosh.io/docs/persistent-disks.html) of that size in megabytes and attaches it to each job instance VM.",
             "type": "integer",
             "title": "Disk Size"
           },
@@ -124,10 +136,148 @@
       "items": {
         "oneOf": [
           {
-            "$ref": "https://dpb587.github.io/bosh-json-schema/v0/director/network/manual.json#"
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "additionalProperties": false,
+            "title": "Dynamic Network",
+            "description": "The Director defers IP selection to the IaaS.",
+            "properties": {
+              "name": {
+                "description": "Name used to reference this network configuration.",
+                "type": "string"
+              },
+              "cloud_properties": {
+                "description": "Describes any IaaS-specific properties for the subnet.",
+                "$ref": "https://dpb587.github.io/bosh-json-schema/v0/cpi/network.json#"
+              },
+              "dns": {
+                "description": "DNS IP addresses for this subnet",
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "type": {
+                "description": "Value must be `dynamic`.",
+                "enum": [
+                  "dynamic"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ],
+            "type": "object"
           },
           {
-            "$ref": "https://dpb587.github.io/bosh-json-schema/v0/director/network/vip.json#"
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "additionalProperties": false,
+            "title": "Manual Network",
+            "description": "The Director decides how to assign IPs to each job instance based on the specified network subnets in the deployment manifest.",
+            "properties": {
+              "name": {
+                "description": "Name used to reference this network configuration.",
+                "type": "string"
+              },
+              "subnets": {
+                "description": "Lists subnets in this network.",
+                "items": {
+                  "properties": {
+                    "az": {
+                      "description": "AZ associated with this subnet (should only be used when using [first class AZs](http://bosh.io/docs/azs/)).",
+                      "type": "string"
+                    },
+                    "azs": {
+                      "description": "List of AZs associated with this subnet (should only be used when using [first class AZs](http://bosh.io/docs/azs/)).",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "cloud_properties": {
+                      "description": "Describes any IaaS-specific properties for the subnet.",
+                      "$ref": "https://dpb587.github.io/bosh-json-schema/v0/cpi/network.json#"
+                    },
+                    "dns": {
+                      "description": "DNS IP addresses for this subnet",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "gateway": {
+                      "description": "Subnet gateway IP",
+                      "type": "string"
+                    },
+                    "range": {
+                      "description": "Subnet IP range that includes all IPs from this subnet",
+                      "type": "string"
+                    },
+                    "reserved": {
+                      "description": "Array of reserved IPs and/or IP ranges. BOSH does not assign IPs from this range to any VM",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    },
+                    "static": {
+                      "description": "Array of static IPs and/or IP ranges. BOSH assigns IPs from this range to jobs requesting static IPs. Only IPs specified here can be used for static IP reservations.",
+                      "items": {
+                        "type": "string"
+                      },
+                      "type": "array"
+                    }
+                  },
+                  "required": [
+                    "range",
+                    "gateway"
+                  ],
+                  "type": "object"
+                },
+                "type": "array"
+              },
+              "type": {
+                "description": "Value must be `manual`.",
+                "enum": [
+                  "manual"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "type",
+              "subnets"
+            ],
+            "type": "object"
+          },
+          {
+            "$schema": "http://json-schema.org/draft-04/schema#",
+            "additionalProperties": false,
+            "title": "Virtual IP",
+            "description": "The Director allows one-off IP assignments to specific jobs to enable flexible IP routing (e.g. elastic IP).",
+            "properties": {
+              "cloud_properties": {
+                "$ref": "https://dpb587.github.io/bosh-json-schema/v0/cpi/network.json#"
+              },
+              "name": {
+                "description": "Name used to reference this network configuration.",
+                "type": "string"
+              },
+              "type": {
+                "description": "Value must be `vip`.",
+                "enum": [
+                  "vip"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "name",
+              "type"
+            ],
+            "type": "object"
           }
         ],
         "type": "object",
@@ -194,6 +344,6 @@
     "disk_types",
     "compilation"
   ],
-  "title": "cloud-config",
+  "title": "Cloud Config",
   "type": "object"
 }
