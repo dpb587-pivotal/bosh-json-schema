@@ -2,33 +2,6 @@
   "$schema": "http://json-schema.org/draft-04/schema#",
   "additionalProperties": false,
   "description": "The cloud config defines IaaS specific configuration used by the Director and all deployments. It allows us to separate IaaS specific configuration into its own file and keep deployment manifests IaaS agnostic.",
-  "definitions": {
-    "az_ref": {
-      "type": "string",
-      "title": "Availability Zone",
-      "description": "An availability zone configured with cloud-config."
-    },
-    "disk_type_ref": {
-      "type": "string",
-      "title": "Disk Type",
-      "description": "A disk type configured with cloud-config."
-    },
-    "network_ref": {
-      "type": "string",
-      "title": "Network",
-      "description": "A network configured with cloud-config."
-    },
-    "vm_extension_ref": {
-      "type": "string",
-      "title": "VM Extension",
-      "description": "A VM extension configured with cloud-config."
-    },
-    "vm_type_ref": {
-      "type": "string",
-      "title": "VM Type",
-      "description": "A VM type configured with cloud-config."
-    }
-  },
   "properties": {
     "azs": {
       "description": "Specifies the AZs available to deployments. At least one should be specified.",

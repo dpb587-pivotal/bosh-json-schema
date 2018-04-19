@@ -1,0 +1,61 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "description": "Schema for `cloud_properties` section used by dynamic and manual network subnets.",
+  "properties": {
+    "network_name": {
+      "description": "The name of the [Google Compute Engine Network](https://cloud.google.com/compute/docs/networking#networks) the CPI will use when creating the instance (if not set, by default it will use the default network).",
+      "type": "array",
+      "examples": [
+        {
+          "default": "cf"
+        }
+      ]
+    },
+    "xpn_host_project_id": {
+      "description": "The [project id](https://support.google.com/cloud/answer/6158840?hl=en) that owns the network resource to support [Shared VPC Networks (XPN)](https://cloud.google.com/compute/docs/xpn/) (if not set, it will default to the project hosting the compute resources).",
+      "type": "string",
+      "examples": [
+        {
+          "default": "my-other-project"
+        }
+      ]
+    },
+    "subnetwork_name": {
+      "description": "The name of the [Google Compute Engine Subnet Network](https://cloud.google.com/compute/docs/networking#subnet_network) the CPI will use when creating the instance. If the network is in legacy mode, do not provide this property. If the network is in auto subnet mode, providing the subnetwork is optional. If the network is in custom subnet mode, then this field is required.",
+      "type": "string",
+      "examples": [
+        {
+          "default": "cf-east"
+        }
+      ]
+    },
+    "ephemeral_external_ip": {
+      "description": "If instances must have an ephemeral external IP. Can be overridden in resource_pools.",
+      "default": false,
+      "type": "boolean"
+    },
+    "ip_forwarding": {
+      "description": " If instances must have IP forwarding enabled. Can be overridden in resource_pools.",
+      "default": false,
+      "type": "boolean"
+    },
+    "tags": {
+      "description": "A list of [tags](https://cloud.google.com/compute/docs/instances/managing-instances#tags) to apply to the instances, useful if you want to apply firewall or routes rules based on tags. Will be merged with tags in resource_pools.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "examples": [
+        {
+          "default": [
+            "foo",
+            "bar"
+          ]
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "title": "Network"
+}

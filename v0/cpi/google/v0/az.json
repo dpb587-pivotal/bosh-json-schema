@@ -1,0 +1,22 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "description": "Schema for `cloud_properties` section used by Availability Zones.",
+  "properties": {
+    "zone": {
+      "description": "[Zone](https://cloud.google.com/compute/docs/regions-zones/regions-zones) to use for creating VMs.",
+      "type": "string",
+      "title": "Availability Zone",
+      "examples": [
+        {
+          "default": "us-central1-f"
+        }
+      ]
+    }
+  },
+  "required": [
+    "availability_zone"
+  ],
+  "type": "object",
+  "title": "Availability Zone"
+}

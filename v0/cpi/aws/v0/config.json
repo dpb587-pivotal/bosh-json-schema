@@ -68,12 +68,14 @@
       "default": false,
       "description": "Turns on [EBS volume encryption](http://docs.aws.amazon.com/AWSEC2/latest/UserGuide/EBSEncryption.html) for all VM's root (system), ephemeral and persistent disks.",
       "type": "boolean",
-      "title": "Enable Encryption"
+      "title": "Enable Encryption",
+      "supportedSince": "[aws-cpi/67](https://github.com/cloudfoundry-incubator/bosh-aws-cpi-release/releases/tag/v67)"
     },
     "kms_key_arn": {
       "description": "Encrypts the disks using an encryption key stored in the [AWS Key Management Service (KMS)](https://aws.amazon.com/kms/). The format of the ID is `XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX`. Be sure to use the Key ID, not the Alias. If this property is omitted and `encrypted` is `true`, the disks will be encrypted using your account's default `aws/ebs` encryption key.",
       "type": "boolean",
-      "title": "Enable Encryption"
+      "title": "Enable Encryption",
+      "supportedSince": "[aws-cpi/67](https://github.com/cloudfoundry-incubator/bosh-aws-cpi-release/releases/tag/v53)"
     }
   },
   "required": [

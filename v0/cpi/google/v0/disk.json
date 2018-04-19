@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "description": "Schema for `cloud_properties` section used by Persistent Disks. Persistent disks are created in the zone of a VM that disk will be attached.",
+  "links": [
+    {
+      "rel": "via",
+      "href": "http://bosh.io/docs/aws-cpi.html#disk-pools"
+    }
+  ],
+  "properties": {
+    "type": {
+      "default": "pd-standard",
+      "description": "Type of the [disk](https://cloud.google.com/compute/docs/disks/#overview)",
+      "enum": [
+        "pd-standard",
+        "pd-ssd"
+      ],
+      "type": "string",
+      "title": "Type"
+    }
+  },
+  "title": "Persistent Disk",
+  "type": "object"
+}

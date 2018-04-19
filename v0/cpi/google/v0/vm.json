@@ -1,0 +1,195 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "description": "Schema for `cloud_properties` section used by Resource Pools and VM Types.",
+  "properties": {
+    "machine_type": {
+      "description": "The name of the [Google Compute Engine Machine Type](https://cloud.google.com/compute/docs/machine-types) the CPI will use when creating the instance (required if not using `cpu` and `ram`).",
+      "type": "string",
+      "examples": [
+        {
+          "default": "n1-standard-1"
+        }
+      ]
+    },
+    "cpu": {
+      "description": "Number of vCPUs ([Google Compute Engine Custom Machine Types](https://cloud.google.com/custom-machine-types/)) the CPI will use when creating the instance (required if not using `machine_type`)",
+      "type": "integer",
+      "examples": [
+        {
+          "default": 2
+        }
+      ]
+    },
+    "cpu": {
+      "description": "Amount of memory ([Google Compute Engine Custom Machine Types](https://cloud.google.com/custom-machine-types/)) the CPI will use when creating the instance (required if not using `machine_type`)",
+      "type": "integer",
+      "examples": [
+        {
+          "default": 2048
+        }
+      ]
+    },
+    "root_disk_size_gb": {
+      "description": "The size (in Gb) of the instance root disk.",
+      "default": 10,
+      "type": "integer",
+      "examples": [
+        {
+          "default": 32
+        }
+      ]
+    },
+    "root_disk_type": {
+      "description": "The name of the [Google Compute Engine Disk Type](https://cloud.google.com/compute/docs/disks/#overview) the CPI will use when creating the instance root disk.",
+      "type": "string",
+      "examples": [
+        {
+          "default": "pd-standard"
+        }
+      ]
+    },
+    "automatic_restart": {
+      "description": "If the instances should be [restarted automatically](https://cloud.google.com/compute/docs/instances/setting-instance-scheduling-options#autorestart) if they are terminated for non-user-initiated reasons.",
+      "type": "boolean",
+      "default": false
+    },
+    "on_host_maintenance": {
+      "description": "[Instance behavior](https://cloud.google.com/compute/docs/instances/setting-instance-scheduling-options#onhostmaintenance) on infrastructure maintenance that may temporarily impact instance performance.",
+      "type": "string",
+      "default": "MIGRATE",
+      "enum": [
+        "MIGRATE",
+        "TERMINATE"
+      ]
+    },
+    "preemptible": {
+      "description": "If the instances should be [preemptible](https://cloud.google.com/preemptible-vms/).",
+      "type": "boolean",
+      "default": false
+    },
+    "service_account": {
+      "description": "The full service account address of the service account to launch the VM with. If a value is provided, `service_scopes` will default to `https://www.googleapis.com/auth/cloud-platform` unless it is explicitly set. See [service account permissions](https://cloud.google.com/compute/docs/access/service-accounts#service_account_permissions) for more details. To use the default service account, leave this field empty and specify `service_scopes`.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "examples": [
+        {
+          "default": [
+            "service-account-name@project-name.iam.gserviceaccount.com"
+          ]
+        }
+      ]
+    },
+    "service_scopes": {
+      "description": "If this value is specified and `service_account` is empty, `default` will be used for `service_account`. This value supports both short (e.g., `cloud-platform`) and fully-qualified (e.g., `https://www.googleapis.com/auth/cloud-platform` formats. See [Authorization scope names](https://cloud.google.com/docs/authentication#oauth_scopes) for more details.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "examples": [
+        {
+          "default": [
+            "cloud-platform"
+          ]
+        }
+      ]
+    },
+    "target_pool": {
+      "description": "The name of the [Google Compute Engine Target Pool](https://cloud.google.com/compute/docs/load-balancing/network/target-pools) the instances should be added to.",
+      "type": "string",
+      "examples": [
+        {
+          "default": [
+            "cf-router"
+          ]
+        }
+      ]
+    },
+    "backend_service": {
+      "description": "The name of the [Google Compute Engine Backend Service](https://cloud.google.com/compute/docs/load-balancing/http/backend-service) the instances should be added to.",
+      "oneOf": [
+        {
+          "title": "HTTP Backend",
+          "description": "The backend service must already be configured with an [Instance Group](https://cloud.google.com/compute/docs/instance-groups/#unmanaged_instance_groups) in the same zone as this instance.",
+          "type": "string",
+          "examples": [
+            {
+              "default": "cf-router"
+            }
+          ]
+        },
+        {
+          "title": "Internal Load Balancing",
+          "description": "To set up [Internal Load Balancing](https://cloud.google.com/compute/docs/load-balancing/internal/) use a map and set scheme to `INTERNAL` and name to the name of the backend service.",
+          "type": "object",
+          "properties": {
+            "name": {
+              "description": "Name of the backend service.",
+              "type": "string"
+            },
+            "scheme": {
+              "description": "This must be `INTERNAL`.",
+              "type": "string",
+              "enum": [
+                "INTERNAL"
+              ]
+            }
+          },
+          "required": [
+            "name",
+            "scheme"
+          ],
+          "examples": [
+            {
+              "default": {
+                "name": "cf-internal",
+                "scheme": "INTERNAL"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    "ephemeral_external_ip": {
+      "description": "Overrides the equivalent option in the networks section.",
+      "type": "boolean",
+      "default": false
+    },
+    "ip_forwarding": {
+      "description": "Overrides the equivalent option in the networks section.",
+      "type": "boolean",
+      "default": false
+    },
+    "tags": {
+      "description": "Merged with tags from the networks section.",
+      "items": {
+        "type": "string"
+      },
+      "type": "array",
+      "examples": [
+        {
+          "default": [
+            "foo",
+            "bar"
+          ]
+        }
+      ]
+    },
+    "labels": {
+      "description": "A dictionary of (key,value) labels applied to the VM. ",
+      "additionalProperties": true,
+      "type": "object",
+      "examples": [
+        {
+          "default": {
+            "foo": "bar"
+          }
+        }
+      ]
+    }
+  },
+  "type": "object",
+  "title": "Virtual Machine"
+}

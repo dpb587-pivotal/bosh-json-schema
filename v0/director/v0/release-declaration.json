@@ -1,0 +1,116 @@
+{
+  "$schema": "http://json-schema.org/draft-04/schema#",
+  "additionalProperties": false,
+  "description": "For referencing releases which are already available on the director, or can be uploaded to the director.",
+  "allOf": [
+    {
+      "type": "object",
+      "properties": {
+        "name": {
+          "description": "Name of a release used in the deployment.",
+          "type": "string"
+        },
+        "version": {
+          "description": "The version of the release to use. Version can be `latest`.",
+          "type": "string"
+        }
+      },
+      "required": [
+        "name",
+        "version"
+      ]
+    },
+    {
+      "oneOf": [
+        {
+          "title": "Local URLs",
+          "description": "CLI v2 will look for file locally and provide it to the upload-release command.",
+          "type": "object",
+          "properties": {
+            "url": {
+              "description": "The local filesystem path (using the `file` scheme) to the tarball.",
+              "type": "string",
+              "pattern": "^file://"
+            },
+            "sha1": {
+              "description": "The checksum of the local tarball.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "examples": [
+            {
+              "default": {
+                "name": "syslog",
+                "version": 11,
+                "url": "file://syslog-11.tgz",
+                "sha1": "332ac15609b220a3fdf5efad0e0aa069d8235788"
+              }
+            }
+          ]
+        },
+        {
+          "title": "HTTP/HTTPs URLs",
+          "description": "CLI v2 will delegate download of the release to the Director, hence Director must have connectivity to specified resource.",
+          "type": "object",
+          "properties": {
+            "url": {
+              "description": "The remote download URL to the tarball.",
+              "type": "string",
+              "pattern": "^https?://"
+            },
+            "sha1": {
+              "description": "The checksum of the remote tarball.",
+              "type": "string"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "examples": [
+            {
+              "default": {
+                "name": "syslog",
+                "version": 11,
+                "url": "https://bosh.io/d/github.com/cloudfoundry/syslog-release?v=11",
+                "sha1": "332ac15609b220a3fdf5efad0e0aa069d8235788"
+              }
+            }
+          ]
+        },
+        {
+          "title": "Git URLs",
+          "description": "CLI v2 will perform a shallow clone locally and run upload-release command from within cloned repository.",
+          "type": "object",
+          "properties": {
+            "url": {
+              "description": "The remote git URL (using the `git+http` or `git+https` scheme) to the release repository.",
+              "type": "string",
+              "pattern": "^git+https?://"
+            }
+          },
+          "required": [
+            "url"
+          ],
+          "examples": [
+            {
+              "default": {
+                "name": "syslog",
+                "version": 11,
+                "url": "git+https://github.com/cloudfoundry/syslog-release"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "required": [
+    "name",
+    "version"
+  ],
+  "title": "Release References",
+  "type": "object"
+}
